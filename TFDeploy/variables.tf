@@ -91,27 +91,8 @@ variable exclusions {
     }
   }
 
-
-# Base Variables 
-
-variable "rg_name" {
-}
-
-variable "rg_location" {
-}
-
-variable "tenant_id" {
-}
-
-variable "subscription_id" {
-}
-
-variable "tags" {
-  description = "ARM resource tags to any resource types which accept tags"
-  type        = map(string)
-}
-
 # Variables for the VM deployment 
+# EDIT OS SKUS AS NEEDED #
 
 variable "default_os_sku" {
   default = "7-LVM"
@@ -139,6 +120,26 @@ variable "storage_account_type" {
 
 variable "regions_with_sizes" {
   default = "westus2"
+}
+
+
+# Base Variables 
+
+variable "rg_name" {
+}
+
+variable "rg_location" {
+}
+
+variable "tenant_id" {
+}
+
+variable "subscription_id" {
+}
+
+variable "tags" {
+  description = "ARM resource tags to any resource types which accept tags"
+  type        = map(string)
 }
 
 
