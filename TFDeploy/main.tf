@@ -10,13 +10,26 @@
 ## Creates single RG for test deployment
 
 module "resourcegroup" {
-  source = "../../TFmodules/resource-group"
+  source = "../TFmodules/resource-group"
   
     name     = var.rg_name
     location = var.rg_location
     tags     = var.tags
 
 }
+
+## Collects Data from Pre-Existing Key Vault
+
+data "azurerm_key_vault" "existing" {
+  name                = "huskyvault"
+  resource_group_name = "${var.rg_name}-tooling"
+}
+
+data "azurerm_key_vault_secret" "ssh_public_key" {
+  name         = "pubkey"
+  key_vault_id = data.azurerm_key_vault.existing.id
+}
+
 
 # LOCALS used for manipulating the data needed for 
 # VM deployment and VNET peering.
@@ -128,18 +141,18 @@ locals {
 ## OUTPUTS for REFERENCE ###
 # Use to see the results of the locals #
 
-output "region_with_sizes_final" {
-  value = [
-    for vm in local.regions_with_exclusions : {
-      region_key  = vm.region_key
-      vm_size = vm.vm_size
-      vm_prefix = vm.vm_size
-      vnet_subnet_id = module.vnet1[vm.region_key].default_subnet_id
-      zones = module.vnet1[vm.region_key].zones
-      os_sku = vm.os_sku
-    }
-  ]
-}
+# output "region_with_sizes_final" {
+#   value = [
+#     for vm in local.regions_with_exclusions : {
+#       region_key  = vm.region_key
+#       vm_size = vm.vm_size
+#       vm_prefix = vm.vm_size
+#       vnet_subnet_id = module.vnet1[vm.region_key].default_subnet_id
+#       zones = module.vnet1[vm.region_key].zones
+#       os_sku = vm.os_sku
+#     }
+#   ]
+# }
 
 # output "vnet_to_vnet" {
 #   value = [
@@ -158,7 +171,7 @@ output "region_with_sizes_final" {
 ## VNETS
 
 module "vnet1" {
-  source = "../../TFmodules/networking/vnet"
+  source = "../TFmodules/networking/vnet"
   for_each = var.regioninfo
   depends_on = [module.resourcegroup]
 
@@ -181,10 +194,9 @@ module "vnet1" {
 ## Apply NSG Rules on Subnets
 
 module "nsg_vnet1" {
-    source = "../../TFmodules/networking/nsgrules"
+    source = "../TFmodules/networking/nsgrules"
     for_each = var.regioninfo
     
-
     resource_group_name = var.rg_name
     network_security_group_name = module.vnet1[each.key].defaultsub_nsg_name
 }
@@ -192,7 +204,7 @@ module "nsg_vnet1" {
 ## Peering between each VNET
 
 module "peering" {
-  source = "../../TFmodules/networking/peering"
+  source = "../TFmodules/networking/peering"
   for_each = {
     for peer in local.vnet_to_vnet : "${peer.name_A}.${peer.name_B}" => peer
    }
@@ -209,7 +221,7 @@ module "peering" {
 # TO DO: Variablize the os_sku to account for VMs that support only Gen-2
 
 module "create_linuxserver_on_vnet" {
-  source   = "../../TFmodules/zs_compute_linux"
+  source   = "../TFmodules/zs_compute_linux"
   for_each = {
     for vm in local.regions_with_sizes_final : "${vm.region_key}.${vm.vm_size}" => vm
   }
@@ -230,6 +242,7 @@ module "create_linuxserver_on_vnet" {
   admin_username                = var.admin_username
   enable_accelerated_networking = true
   boot_diag_SA_endpoint         = var.boot_diag_SA_endpoint
+  ssh_public_key      = data.azurerm_key_vault_secret.ssh_public_key.value
 
 }
 

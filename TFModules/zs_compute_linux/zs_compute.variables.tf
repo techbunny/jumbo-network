@@ -68,5 +68,9 @@ variable "compute_hostname_prefix" {
 variable "vm_size" {
 }
 
+variable "ssh_public_key" {
+  
+}
+
 
 

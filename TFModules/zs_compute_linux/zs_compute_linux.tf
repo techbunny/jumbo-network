@@ -30,10 +30,12 @@ resource "azurerm_linux_virtual_machine" "compute" {
   # availability_set_id         = var.compute_instance_count != null ? var.avset_id : null
                                          
   tags = var.tags  
+  custom_data = filebase64("${path.module}/cloud-init-iperf.txt")
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa.pub")
+    # public_key = file("~/.ssh/id_rsa.pub")
+    public_key = var.ssh_public_key
   }
 
   os_disk {
@@ -55,7 +57,6 @@ resource "azurerm_linux_virtual_machine" "compute" {
 
 resource "azurerm_network_interface" "compute" {
   count                         = var.compute_instance_count != null ? var.compute_instance_count : 1
-  # name                          = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-nic" 
   name                          = var.compute_instance_count != null ? "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-nic" : "${var.compute_hostname_prefix}-a${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-nic"
   location                      = var.location
   resource_group_name           = var.resource_group_name
@@ -73,7 +74,6 @@ resource "azurerm_network_interface" "compute" {
 
 resource "azurerm_public_ip" "compute" {
   count                         = var.compute_instance_count != null ? var.compute_instance_count : 1
-  # name                          = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-pip" 
   name                          = var.compute_instance_count != null ? "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-pip" : "${var.compute_hostname_prefix}-a${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-pip"
   location                      = var.location
   resource_group_name           = var.resource_group_name
@@ -85,24 +85,24 @@ resource "azurerm_public_ip" "compute" {
 
 }
 
-resource "azurerm_virtual_machine_extension" "compute" {
-  count                = var.compute_instance_count != null ? var.compute_instance_count : 1
-  name                 = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}"
-  virtual_machine_id   = element(azurerm_linux_virtual_machine.compute.*.id, count.index)
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.0"
+# resource "azurerm_virtual_machine_extension" "compute" {
+#   count                = var.compute_instance_count != null ? var.compute_instance_count : 1
+#   name                 = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}"
+#   virtual_machine_id   = element(azurerm_linux_virtual_machine.compute.*.id, count.index)
+#   publisher            = "Microsoft.Azure.Extensions"
+#   type                 = "CustomScript"
+#   type_handler_version = "2.0"
 
-  settings = <<SETTINGS
-    {
-        "commandToExecute": "hostname && uptime"
-    }
-SETTINGS
+#   settings = <<SETTINGS
+#     {
+#         "commandToExecute": "hostname && uptime"
+#     }
+# SETTINGS
 
 
-  tags = {
-    environment = "Production"
-  }
-}
+#   tags = {
+#     environment = "Production"
+#   }
+# }
 
 ## Need to add in resource for AVSet creation if zones aren't used

@@ -3,7 +3,7 @@
 variable vm_sizes {
   type = list(string)
   default = [
-    # "Standard_D2_v2",
+    "Standard_D2_v2",
     # "Standard_DS2_v2",
     # "Standard_D4_v3",
     # "Standard_D4s_v3",
@@ -23,14 +23,14 @@ variable vm_sizes {
     # "Standard_E4ds_v4",
     # "Standard_E4_v4",
     # "Standard_E4s_v4"
-    "Standard_M8ms"
+    # "Standard_M8ms"
   ]
 }
 
 variable vm_sizes_gen2 {
   type = list(string)
   default = [
-    "Standard_DC2s_v2",  #Gen2 only
+    # "Standard_DC2s_v2",  #Gen2 only
     # "Standard_M208sv2" #Gen2 only
   ]
 }
@@ -49,7 +49,7 @@ variable regioninfo {
     eastus2 = {
       zones = "1"
       cidr_net = "10.2.0.0"
-    },
+    # },
     # centralus = {
     #   zones = "1"
     #   cidr_net = "10.3.0.0"
@@ -58,9 +58,9 @@ variable regioninfo {
     #   zones = "1"
     #   cidr_net = "10.4.0.0"
     # },
-    southcentralus = {
-      zones = null
-      cidr_net = "10.5.0.0"
+    # southcentralus = {
+    #   zones = null
+    #   cidr_net = "10.5.0.0"
     # },
     # japaneast = {
     #   zones = "1"
