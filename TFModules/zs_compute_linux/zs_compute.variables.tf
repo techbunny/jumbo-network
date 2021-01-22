@@ -72,5 +72,17 @@ variable "ssh_public_key" {
   
 }
 
+variable "dps_key" {
+
+}
+
+variable "alt_admin" {
+
+}
+
+variable "sastoken" {
+  
+}
+
 
 

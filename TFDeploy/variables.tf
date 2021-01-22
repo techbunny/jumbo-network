@@ -43,13 +43,13 @@ variable vm_sizes_gen2 {
 variable regioninfo {
   default = {
     westus2 = {
-      zones = "1"
+      zones    = "1"
       cidr_net = "10.1.0.0"
     },
     eastus2 = {
-      zones = "1"
+      zones    = "1"
       cidr_net = "10.2.0.0"
-    # },
+    },
     # centralus = {
     #   zones = "1"
     #   cidr_net = "10.3.0.0"
@@ -58,21 +58,21 @@ variable regioninfo {
     #   zones = "1"
     #   cidr_net = "10.4.0.0"
     # },
-    # southcentralus = {
-    #   zones = null
-    #   cidr_net = "10.5.0.0"
-    # },
-    # japaneast = {
-    #   zones = "1"
-    #   cidr_net = "10.10.0.0"
-    # },
-    # northeurope = {
-    #   zones = "1"
-    #   cidr_net = "10.20.0.0"
-    # },
-    # westeurope = {
-    #   zones = "1"
-    #   cidr_net = "10.21.0.0"
+    southcentralus = {
+      zones    = null
+      cidr_net = "10.5.0.0"
+      # },
+      # japaneast = {
+      #   zones = "1"
+      #   cidr_net = "10.10.0.0"
+      # },
+      # northeurope = {
+      #   zones = "1"
+      #   cidr_net = "10.20.0.0"
+      # },
+      # westeurope = {
+      #   zones = "1"
+      #   cidr_net = "10.21.0.0"
     }
   }
 }
@@ -85,14 +85,18 @@ variable exclusions {
     # japaneast = "Standard_M8ms", 
     # westeurope = "Standard_M8ms", 
     # eastus = "Standard_M208sv2"
-    westus2 = "Standard_M8ms", #quota limits
-    eastus2 = "Standard_DC2s_v2",
+    westus2        = "Standard_M8ms", #quota limits
+    eastus2        = "Standard_DC2s_v2",
     southcentralus = "Standard_M8ms" #quota limits
-    }
   }
+}
 
 # Variables for the VM deployment 
 # EDIT OS SKUS AS NEEDED #
+
+variable "ssh_public_key" {
+
+}
 
 variable "default_os_sku" {
   default = "7-LVM"
@@ -125,7 +129,7 @@ variable "regions_with_sizes" {
 
 # Base Variables 
 
-variable "rg_name" {
+variable "base_name" {
 }
 
 variable "rg_location" {
@@ -141,6 +145,19 @@ variable "tags" {
   description = "ARM resource tags to any resource types which accept tags"
   type        = map(string)
 }
+
+# variable "dps_key" {
+
+# }
+
+variable "alt_admin" {
+
+}
+
+variable "sastoken" {
+
+}
+
 
 
 

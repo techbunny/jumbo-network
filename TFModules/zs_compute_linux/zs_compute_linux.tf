@@ -30,7 +30,55 @@ resource "azurerm_linux_virtual_machine" "compute" {
   # availability_set_id         = var.compute_instance_count != null ? var.avset_id : null
                                          
   tags = var.tags  
-  custom_data = filebase64("${path.module}/cloud-init-iperf.txt")
+  # custom_data = filebase64("${path.module}/cloud-init-iperf.txt")
+  custom_data = base64encode(<<CLOUDINIT
+#cloud-config
+
+package_upgrade: false
+packages:
+  - unzip
+  - screen
+  - iperf3
+
+ssh_authorized_keys:
+  - ${var.alt_admin}
+  
+write_files:
+  - owner: root:root
+    path: /etc/systemd/system/edgeclient.service
+    content: |
+      [Unit]
+      Description=VMBlaster waiting for commands to spread some blasting love
+      
+      [Service]
+      # systemd will run this executable to start the service
+      ExecStart=/opt/vmblaster/edgeclient
+      # to query logs using journalctl, set a logical name here
+      SyslogIdentifier=edgeclient
+      User=root
+           
+      Environment=DPS_ENROLLMENT_KEY=${var.dps_key}
+      Environment=DPS_ID_SCOPE=0ne001EB486
+      Environment=DPS_ENROLLMENT_GROUP=e-edgevms
+      Environment=DPS_GLOBAL_DEVICE_ENDPOINT=global.azure-devices-provisioning.net
+      Environment=LOG_FOLDER=/opt/vmblaster/logs
+      [Install]
+      WantedBy=multi-user.target
+   
+runcmd:
+#  - register the VM with the function - do this outside of the VMBlaster/client?
+  - mkdir -p -m 755 /opt/vmblaster/logs
+  - [ wget, "https://ronieuwe.blob.core.windows.net/blaster/EdgeClient${var.sastoken}", -O, /opt/vmblaster/edgeclient ]
+  - chown -R sysadmin /opt/vmblaster/
+  - chmod -R 755 /opt/vmblaster/
+  - systemctl daemon-reload
+  - systemctl start edgeclient
+
+ 
+
+final_message: "The system is finally up, after $UPTIME seconds"
+CLOUDINIT
+  )
 
   admin_ssh_key {
     username   = var.admin_username
@@ -57,6 +105,7 @@ resource "azurerm_linux_virtual_machine" "compute" {
 
 resource "azurerm_network_interface" "compute" {
   count                         = var.compute_instance_count != null ? var.compute_instance_count : 1
+  # name                          = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-nic" 
   name                          = var.compute_instance_count != null ? "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-nic" : "${var.compute_hostname_prefix}-a${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-nic"
   location                      = var.location
   resource_group_name           = var.resource_group_name
@@ -74,6 +123,7 @@ resource "azurerm_network_interface" "compute" {
 
 resource "azurerm_public_ip" "compute" {
   count                         = var.compute_instance_count != null ? var.compute_instance_count : 1
+  # name                          = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-pip" 
   name                          = var.compute_instance_count != null ? "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-pip" : "${var.compute_hostname_prefix}-a${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}-pip"
   location                      = var.location
   resource_group_name           = var.resource_group_name
@@ -85,24 +135,6 @@ resource "azurerm_public_ip" "compute" {
 
 }
 
-# resource "azurerm_virtual_machine_extension" "compute" {
-#   count                = var.compute_instance_count != null ? var.compute_instance_count : 1
-#   name                 = "${var.compute_hostname_prefix}-z${count.index + 1}-${random_string.compute.result}-${format("%.02d",count.index + 1)}"
-#   virtual_machine_id   = element(azurerm_linux_virtual_machine.compute.*.id, count.index)
-#   publisher            = "Microsoft.Azure.Extensions"
-#   type                 = "CustomScript"
-#   type_handler_version = "2.0"
 
-#   settings = <<SETTINGS
-#     {
-#         "commandToExecute": "hostname && uptime"
-#     }
-# SETTINGS
-
-
-#   tags = {
-#     environment = "Production"
-#   }
-# }
 
 ## Need to add in resource for AVSet creation if zones aren't used
